@@ -1,0 +1,24 @@
+{
+  "llm": {
+    "provider": "anthropic",
+    "apiKey": "test-key",
+    "model": "claude-3-sonnet",
+    "temperature": 0.7,
+    "maxTokens": 4000
+  },
+  "shell": {
+    "allowDangerousCommands": false,
+    "defaultTimeout": 30000,
+    "confirmationRequired": true,
+    "historySize": 100
+  },
+  "editor": {
+    "defaultEditor": "code",
+    "tempDir": "/tmp"
+  },
+  "session": {
+    "saveHistory": true,
+    "maxHistorySize": 100,
+    "historyPath": ".cli-coder/history"
+  }
+}
