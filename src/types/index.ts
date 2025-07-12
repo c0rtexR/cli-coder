@@ -1,58 +1,38 @@
 /**
- * Shared type definitions for CLI Coder
+ * Central type definitions export for CLI coder application
  */
 
-export interface CLIConfig {
-  apiKeys: {
-    openai?: string;
-    anthropic?: string;
-  };
-  preferences: {
-    defaultModel: string;
-    outputFormat: 'text' | 'json' | 'markdown';
-    verbose: boolean;
-  };
-  paths: {
-    configDir: string;
-    cacheDir: string;
-  };
+// CLI Types
+export * from './cli.types';
+
+// LLM Types  
+export * from './llm.types';
+
+// Shell Integration Types
+export * from './shell.types';
+
+// Configuration Types
+export * from './config.types';
+
+// Session Types
+export * from './session.types';
+
+// Utility Types
+export type Result<T, E = Error> = {
+  success: true;
+  data: T;
+} | {
+  success: false;
+  error: E;
+};
+
+export type AsyncResult<T, E = Error> = Promise<Result<T, E>>;
+
+// Type Guards
+export function isSuccess<T, E>(result: Result<T, E>): result is { success: true; data: T } {
+  return result.success;
 }
 
-export interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: Date;
+export function isError<T, E>(result: Result<T, E>): result is { success: false; error: E } {
+  return !result.success;
 }
-
-export interface LLMProvider {
-  name: string;
-  models: string[];
-  isConfigured: boolean;
-}
-
-export interface CommandResult<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  executionTime?: number;
-}
-
-export interface FileOperation {
-  type: 'read' | 'write' | 'delete' | 'create';
-  path: string;
-  content?: string;
-  timestamp: Date;
-}
-
-export interface SessionContext {
-  id: string;
-  startTime: Date;
-  messages: ChatMessage[];
-  fileOperations: FileOperation[];
-  currentWorkingDirectory: string;
-}
-
-// Re-export commonly used types
-export type Result<T, E = Error> = 
-  | { success: true; data: T }
-  | { success: false; error: E };
