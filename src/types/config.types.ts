@@ -40,8 +40,6 @@ export interface SessionConfig {
   saveHistory: boolean;
   /** Maximum number of messages to keep */
   maxHistorySize: number;
-  /** File path for history storage */
-  historyPath: string;
 }
 
 export interface FileContext {
