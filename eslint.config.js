@@ -11,6 +11,17 @@ export default [
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module'
+      },
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        global: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly'
       }
     },
     plugins: {
@@ -24,7 +35,8 @@ export default [
       }],
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
-      'no-unused-vars': 'off' // Turn off base rule as it can report incorrect errors
+      'no-unused-vars': 'off', // Turn off base rule as it can report incorrect errors
+      'no-undef': 'off' // Turn off since TypeScript handles this
     }
   }
 ];

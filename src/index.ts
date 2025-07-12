@@ -1,39 +1,39 @@
 #!/usr/bin/env node
 
-/**
- * CLI Coder - AI-powered CLI coding assistant
- * Main entry point
- */
-
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { registerCommands } from './commands/index';
+import { setupErrorHandling } from './utils/errors';
 
-const program = new Command();
+async function main(): Promise<void> {
+  const program = new Command();
+  
+  program
+    .name('cli-coder')
+    .description('AI-powered CLI coding assistant')
+    .version('0.1.0');
 
-program
-  .name('cli-coder')
-  .description('AI-powered CLI coding assistant')
-  .version('0.1.0');
+  // Setup global error handling
+  setupErrorHandling();
 
-// Placeholder command structure
-program
-  .command('init')
-  .description('Initialize CLI Coder configuration')
-  .action(() => {
-    console.log(chalk.green('🚀 CLI Coder initialized!'));
-  });
+  // Register all commands
+  await registerCommands(program);
 
-program
-  .command('chat')
-  .description('Start interactive chat session')
-  .action(() => {
-    console.log(chalk.blue('💬 Chat mode coming soon...'));
-  });
-
-// Parse command line arguments
-if (import.meta.url === `file://${process.argv[1]}`) {
-  program.parse();
+  // Parse arguments
+  await program.parseAsync(process.argv);
 }
 
-export { program };
-export default program;
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error(chalk.red('Unhandled promise rejection:'), reason);
+  process.exit(1);
+});
+
+// Run the CLI
+main().catch((error) => {
+  console.error(chalk.red('Fatal error:'), error.message);
+  process.exit(1);
+});
+
+export { main as program };
+export default main;
