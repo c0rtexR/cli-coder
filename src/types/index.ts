@@ -4,8 +4,8 @@ export * from './cli.types';
 // LLM Types  
 export * from './llm.types';
 
-// Git Types
-export * from './git.types';
+// Shell Integration Types
+export * from './shell.types';
 
 // Configuration Types
 export * from './config.types';

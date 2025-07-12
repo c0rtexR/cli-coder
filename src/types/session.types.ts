@@ -35,6 +35,8 @@ export interface SessionMetadata {
   filesModified: string[];
   /** Timestamp of last activity */
   lastActivity: Date;
+  /** Number of shell commands executed in this session */
+  shellCommandsExecuted: number;
 }
 
 /**

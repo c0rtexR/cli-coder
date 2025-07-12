@@ -6,8 +6,8 @@ import type { LLMConfig, FileContext } from './llm.types';
 export interface AppConfig {
   /** LLM provider configuration */
   llm: LLMConfig;
-  /** Git-related configuration */
-  git: GitConfig;
+  /** Shell integration configuration */
+  shell: ShellConfig;
   /** Editor configuration */
   editor: EditorConfig;
   /** Session management configuration */
@@ -15,15 +15,19 @@ export interface AppConfig {
 }
 
 /**
- * Git-related configuration options
+ * Shell integration configuration options
  */
-export interface GitConfig {
-  /** Whether to automatically commit changes */
-  autoCommit: boolean;
-  /** Template for commit messages */
-  commitMessageTemplate: string;
-  /** Files to exclude from Git operations */
-  excludeFiles: string[];
+export interface ShellConfig {
+  /** Whether to allow execution of potentially dangerous commands */
+  allowDangerousCommands: boolean;
+  /** Default timeout for shell commands in milliseconds */
+  defaultTimeout: number;
+  /** Whether confirmation is required before executing commands */
+  confirmationRequired: boolean;
+  /** Default working directory for shell commands */
+  workingDirectory?: string;
+  /** Number of shell command executions to keep in history */
+  historySize: number;
 }
 
 /**
