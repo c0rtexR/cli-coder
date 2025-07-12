@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { ChatSession } from '../../../types';
 import { llmService } from '../../../integrations/llm';
+import { CommandPalette, Command } from './CommandPalette';
+import { CommandRegistry } from '../commands/registry';
 
 interface InputPanelProps {
   session: ChatSession;
@@ -18,9 +20,16 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  
+  const commandRegistry = new CommandRegistry(session);
+  const commands = commandRegistry.getCommands();
 
   useInput((inputChar, key) => {
     if (!isActive) return;
+
+    // Don't handle input if command palette is open
+    if (showCommandPalette) return;
 
     if (key.ctrl && key.return) {
       handleSendMessage();
@@ -45,10 +54,42 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     } else if (key.delete) {
       // Delete character at cursor (simplified)
       setInput(input.slice(0, -1));
+    } else if (inputChar === '/' && input === '') {
+      // Show command palette when typing '/' at the start
+      setShowCommandPalette(true);
+      setInput('/');
     } else if (inputChar && !key.ctrl && !key.meta) {
       setInput(input + inputChar);
     }
   }, { isActive });
+
+  const handleCommandSelect = async (command: Command) => {
+    setShowCommandPalette(false);
+    setInput('');
+    
+    // Add command to history
+    setCommandHistory(prev => [...prev, `/${command.name}`]);
+    setHistoryIndex(-1);
+
+    // Execute the command
+    try {
+      setIsLoading(true);
+      await command.execute();
+    } catch (error) {
+      session.messages.push({
+        role: 'assistant',
+        content: `Command failed: ${(error as Error).message}`,
+        timestamp: new Date(),
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCommandCancel = () => {
+    setShowCommandPalette(false);
+    setInput('');
+  };
 
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -130,7 +171,15 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       height="100%" 
       onClick={handleClick}
       borderColor={isActive ? "yellow" : "gray"}
+      position="relative"
     >
+      <CommandPalette
+        commands={commands}
+        onSelect={handleCommandSelect}
+        onCancel={handleCommandCancel}
+        isVisible={showCommandPalette}
+      />
+      
       <Box paddingX={1} backgroundColor={isActive ? "yellow" : undefined}>
         <Text color={isActive ? "black" : "yellow"} bold>⌨️  Input</Text>
         {isLoading && (
@@ -147,7 +196,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       {isActive && (
         <Box paddingX={1}>
           <Text color="gray" dimColor>
-            Ctrl+Enter: Send | ↑↓: History | Type /help for commands
+            Ctrl+Enter: Send | ↑↓: History | Type "/" for commands
           </Text>
         </Box>
       )}
