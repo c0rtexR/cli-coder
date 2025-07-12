@@ -6,6 +6,7 @@ import { ConfigManager } from '../config/manager';
 import { llmService } from '../integrations/llm';
 import { ChatInterface } from '../core/chat/interface';
 import { TUIApp } from '../core/tui/app';
+import { SetupWizard } from '../core/wizard/setup';
 import { ChatSession } from '../types';
 import { handleError } from '../utils/errors';
 
@@ -25,10 +26,17 @@ export const chatCommand = new Command('chat')
   });
 
 async function startChatSession(options: { model?: string; provider?: string; basic?: boolean }): Promise<void> {
-  console.log(chalk.blue('🚀 Starting chat session...'));
-
-  // Load configuration
-  const config = await configManager.loadConfig();
+  // Try to load configuration
+  let config;
+  try {
+    config = await configManager.loadConfig();
+  } catch (error) {
+    // Configuration doesn't exist or is invalid - run setup wizard
+    console.clear();
+    await SetupWizard.showWelcomeMessage();
+    const wizard = new SetupWizard();
+    config = await wizard.run();
+  }
   
   // Override with command options
   if (options.model) config.llm.model = options.model;
@@ -39,9 +47,12 @@ async function startChatSession(options: { model?: string; provider?: string; ba
     await llmService.initialize(config.llm);
   } catch (error) {
     console.error(chalk.red('❌ Failed to initialize LLM'));
-    console.error(chalk.gray('Run "cli-coder config --setup"'));
-    throw error;
+    console.error(chalk.yellow('💡 This usually means your API key is invalid or the service is unavailable.'));
+    console.error(chalk.gray('Run "cli-coder config --setup" to reconfigure.'));
+    process.exit(1);
   }
+
+  console.log(chalk.blue('🚀 Starting chat session...'));
 
   // Create session
   const session: ChatSession = {

@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { ConfigManager } from '../config';
+import { SetupWizard } from '../core/wizard/setup';
 
 const configManager = new ConfigManager();
 
@@ -24,39 +25,10 @@ export const configCommand = new Command('config')
   });
 
 async function setupInteractiveConfig(global = false): Promise<void> {
-  console.log(chalk.blue.bold('🔧 CLI Coder Configuration Setup'));
-  
-  const answers = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'provider',
-      message: 'Choose your LLM provider:',
-      choices: ['openai', 'anthropic', 'gemini'],
-    },
-    {
-      type: 'password',
-      name: 'apiKey',
-      message: 'Enter your API key:',
-      mask: '*',
-    },
-    {
-      type: 'input',
-      name: 'model',
-      message: 'Enter model name:',
-      default: 'gpt-4',
-    },
-  ]);
-
-  const config = {
-    llm: {
-      provider: answers.provider,
-      apiKey: answers.apiKey,
-      model: answers.model,
-    },
-  };
-
-  await configManager.saveConfig(config, global);
-  console.log(chalk.green('✅ Configuration saved!'));
+  console.clear();
+  await SetupWizard.showWelcomeMessage();
+  const wizard = new SetupWizard();
+  await wizard.run();
 }
 
 async function setupShellConfig(global = false): Promise<void> {

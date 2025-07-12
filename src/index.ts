@@ -19,6 +19,11 @@ async function main(): Promise<void> {
   // Register all commands
   await registerCommands(program);
 
+  // If no command is provided, default to chat
+  if (process.argv.length <= 2) {
+    process.argv.push('chat');
+  }
+
   // Parse arguments
   await program.parseAsync(process.argv);
 }
