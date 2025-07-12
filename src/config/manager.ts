@@ -69,13 +69,13 @@ export class ConfigManager {
     // LLM overrides
     if (process.env.OPENAI_API_KEY) {
       config.llm = { 
-        ...config.llm, 
+        ...config.llm as any, 
         apiKey: process.env.OPENAI_API_KEY 
       };
     }
     if (process.env.ANTHROPIC_API_KEY) {
       config.llm = { 
-        ...config.llm, 
+        ...config.llm as any, 
         apiKey: process.env.ANTHROPIC_API_KEY 
       };
     }
@@ -85,7 +85,7 @@ export class ConfigManager {
       const timeout = parseInt(process.env.CLI_CODER_SHELL_TIMEOUT);
       if (!isNaN(timeout)) {
         config.shell = { 
-          ...config.shell, 
+          ...config.shell as any, 
           defaultTimeout: timeout 
         };
       }
@@ -93,7 +93,7 @@ export class ConfigManager {
     
     if (process.env.CLI_CODER_ALLOW_DANGEROUS === 'true') {
       config.shell = { 
-        ...config.shell, 
+        ...config.shell as any, 
         allowDangerousCommands: true 
       };
     }
