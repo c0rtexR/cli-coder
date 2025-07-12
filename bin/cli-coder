@@ -1,6 +1,3 @@
 #!/usr/bin/env node
 
-const path = require('path');
-const { main } = require(path.join(__dirname, '..', 'dist', 'index.js'));
-
-main();
+require('../dist/index.js');

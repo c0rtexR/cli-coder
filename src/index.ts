@@ -1,14 +1,36 @@
 #!/usr/bin/env node
 
-export interface CLICoderOptions {
-  version?: boolean;
-  help?: boolean;
+import { Command } from 'commander';
+import chalk from 'chalk';
+import { registerCommands } from './commands/index';
+import { setupErrorHandling } from './utils/errors';
+
+async function main(): Promise<void> {
+  const program = new Command();
+  
+  program
+    .name('cli-coder')
+    .description('AI-powered CLI coding assistant')
+    .version('0.1.0');
+
+  // Setup global error handling
+  setupErrorHandling();
+
+  // Register all commands
+  await registerCommands(program);
+
+  // Parse arguments
+  await program.parseAsync(process.argv);
 }
 
-export function main(): void {
-  console.log('CLI Coder - AI-powered CLI coding assistant');
-}
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason) => {
+  console.error(chalk.red('Unhandled promise rejection:'), reason);
+  process.exit(1);
+});
 
-if (require.main === module) {
-  main();
-}
+// Run the CLI
+main().catch((error) => {
+  console.error(chalk.red('Fatal error:'), error.message);
+  process.exit(1);
+});
