@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { ChatInterface } from './interface';
 import { fileService } from '../../integrations/filesystem/service';
+import { shellService } from '../../integrations/shell/service';
 import { handleError } from '../../utils/errors';
 
 export class CommandParser {
@@ -34,6 +35,23 @@ export class CommandParser {
 
       case 'remove':
         await this.handleRemoveFiles(args);
+        break;
+
+      case 'shell':
+      case 'sh':
+        await this.handleShellCommand(args);
+        break;
+
+      case 'git':
+        await this.handleGitCommand(args);
+        break;
+
+      case 'npm':
+        await this.handleNpmCommand(args);
+        break;
+
+      case 'docker':
+        await this.handleDockerCommand(args);
         break;
 
       case 'exit':
@@ -148,6 +166,100 @@ export class CommandParser {
 
     if (removedCount > 0) {
       console.log(chalk.blue(`Removed ${removedCount} files from context`));
+    }
+  }
+
+  private async handleShellCommand(args: string[]): Promise<void> {
+    if (args.length === 0) {
+      console.log(chalk.red('Usage: /shell <command>'));
+      console.log(chalk.gray('Examples:'));
+      console.log(chalk.gray('  /shell git status'));
+      console.log(chalk.gray('  /shell npm install lodash'));
+      console.log(chalk.gray('  /shell docker ps'));
+      return;
+    }
+
+    const command = args.join(' ');
+    
+    try {
+      const result = await shellService.execute(command, {
+        workingDirectory: process.cwd(),
+        showOutput: true,
+      });
+
+      if (result.success) {
+        console.log(chalk.green(`✅ Command completed (${result.duration}ms)`));
+      } else {
+        console.log(chalk.red(`❌ Command failed with exit code ${result.exitCode}`));
+      }
+    } catch (error) {
+      handleError(error as Error);
+    }
+  }
+
+  private async handleGitCommand(args: string[]): Promise<void> {
+    if (args.length === 0) {
+      console.log(chalk.red('Usage: /git <subcommand>'));
+      console.log(chalk.gray('Examples:'));
+      console.log(chalk.gray('  /git status'));
+      console.log(chalk.gray('  /git add .'));
+      console.log(chalk.gray('  /git commit -m "message"'));
+      return;
+    }
+
+    try {
+      const result = await shellService.git(args.join(' '));
+      if (result.success) {
+        console.log(chalk.green('✅ Git command completed'));
+      } else {
+        console.log(chalk.red('❌ Git command failed'));
+      }
+    } catch (error) {
+      handleError(error as Error);
+    }
+  }
+
+  private async handleNpmCommand(args: string[]): Promise<void> {
+    if (args.length === 0) {
+      console.log(chalk.red('Usage: /npm <subcommand>'));
+      console.log(chalk.gray('Examples:'));
+      console.log(chalk.gray('  /npm install'));
+      console.log(chalk.gray('  /npm test'));
+      console.log(chalk.gray('  /npm run build'));
+      return;
+    }
+
+    try {
+      const result = await shellService.npm(args.join(' '));
+      if (result.success) {
+        console.log(chalk.green('✅ NPM command completed'));
+      } else {
+        console.log(chalk.red('❌ NPM command failed'));
+      }
+    } catch (error) {
+      handleError(error as Error);
+    }
+  }
+
+  private async handleDockerCommand(args: string[]): Promise<void> {
+    if (args.length === 0) {
+      console.log(chalk.red('Usage: /docker <subcommand>'));
+      console.log(chalk.gray('Examples:'));
+      console.log(chalk.gray('  /docker ps'));
+      console.log(chalk.gray('  /docker images'));
+      console.log(chalk.gray('  /docker build -t myapp .'));
+      return;
+    }
+
+    try {
+      const result = await shellService.docker(args.join(' '));
+      if (result.success) {
+        console.log(chalk.green('✅ Docker command completed'));
+      } else {
+        console.log(chalk.red('❌ Docker command failed'));
+      }
+    } catch (error) {
+      handleError(error as Error);
     }
   }
 }

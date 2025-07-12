@@ -125,11 +125,21 @@ export class ChatInterface {
     console.log(chalk.gray('/add <pattern>      - Add files to context (supports glob patterns)'));
     console.log(chalk.gray('/remove <file>      - Remove files from context'));
     console.log(chalk.gray('/remove all         - Remove all files from context'));
+    console.log(chalk.gray('/shell <command>    - Execute shell command'));
+    console.log(chalk.gray('/git <subcommand>   - Execute git command'));
+    console.log(chalk.gray('/npm <subcommand>   - Execute npm command'));
+    console.log(chalk.gray('/docker <subcmd>    - Execute docker command'));
     console.log(chalk.gray('/exit               - Exit chat'));
     console.log();
     console.log(chalk.blue.bold('File Pattern Examples:'));
     console.log(chalk.gray('/add src/main.ts    - Add single file'));
     console.log(chalk.gray('/add src/**/*.ts    - Add all TypeScript files in src/'));
     console.log(chalk.gray('/add *.json         - Add all JSON files in current directory'));
+    console.log();
+    console.log(chalk.blue.bold('Shell Command Examples:'));
+    console.log(chalk.gray('/git status         - Check git status'));
+    console.log(chalk.gray('/npm install lodash - Install package'));
+    console.log(chalk.gray('/shell ls -la       - List files'));
+    console.log(chalk.gray('/docker ps          - List containers'));
   }
 }
