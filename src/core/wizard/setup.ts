@@ -156,9 +156,10 @@ export class SetupWizard {
     switch (provider) {
       case 'anthropic':
         return [
-          { name: 'Claude 3.5 Sonnet (Recommended) - Best balance of speed and intelligence', value: 'claude-3-5-sonnet-20241022' },
-          { name: 'Claude 3.5 Haiku - Fastest responses', value: 'claude-3-5-haiku-20241022' },
-          { name: 'Claude 3 Opus - Most capable', value: 'claude-3-opus-20240229' },
+          { name: 'Claude Sonnet 4 (Recommended) - Most capable and latest', value: 'claude-sonnet-4-20250514' },
+          { name: 'Claude Opus 4 - Ultimate performance', value: 'claude-opus-4-20250514' },
+          { name: 'Claude 3.7 Sonnet - Advanced reasoning', value: 'claude-3-7-sonnet-latest' },
+          { name: 'Claude 3.5 Haiku - Fast and efficient', value: 'claude-3-5-haiku-latest' },
         ];
       case 'openai':
         return [
