@@ -15,7 +15,7 @@ export const chatCommand = new Command('chat')
   .description('Start interactive chat session')
   .option('-m, --model <model>', 'LLM model to use')
   .option('-p, --provider <provider>', 'LLM provider')
-  .option('--tui', 'Use advanced terminal UI (experimental)')
+  .option('--basic', 'Use basic terminal interface (fallback mode)')
   .action(async (options) => {
     try {
       await startChatSession(options);
@@ -24,7 +24,7 @@ export const chatCommand = new Command('chat')
     }
   });
 
-async function startChatSession(options: { model?: string; provider?: string; tui?: boolean }): Promise<void> {
+async function startChatSession(options: { model?: string; provider?: string; basic?: boolean }): Promise<void> {
   console.log(chalk.blue('🚀 Starting chat session...'));
 
   // Load configuration
@@ -54,13 +54,13 @@ async function startChatSession(options: { model?: string; provider?: string; tu
   };
 
   // Start appropriate interface
-  if (options.tui) {
-    // Start TUI interface
-    const app = React.createElement(TUIApp, { session, config });
-    render(app);
-  } else {
-    // Start basic terminal interface
+  if (options.basic) {
+    // Start basic terminal interface (fallback mode)
     const chatInterface = new ChatInterface(session, config);
     await chatInterface.start();
+  } else {
+    // Start TUI interface (default)
+    const app = React.createElement(TUIApp, { session, config });
+    render(app);
   }
 }
