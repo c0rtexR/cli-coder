@@ -1,37 +1,58 @@
-// CLI Types
-export * from './cli.types';
-
-// LLM Types  
-export * from './llm.types';
-
-// Shell Integration Types
-export * from './shell.types';
-
-// Configuration Types
-export * from './config.types';
-
-// Session Types
-export * from './session.types';
-
-// Utility Types
-
 /**
- * Result type for operations that can succeed or fail
+ * Shared type definitions for CLI Coder
  */
-export type Result<T, E = Error> = {
-  success: true;
-  data: T;
-} | {
-  success: false;
-  error: E;
-};
 
-/**
- * Async result type for Promise-based operations
- */
-export type AsyncResult<T, E = Error> = Promise<Result<T, E>>;
+export interface CLIConfig {
+  apiKeys: {
+    openai?: string;
+    anthropic?: string;
+  };
+  preferences: {
+    defaultModel: string;
+    outputFormat: 'text' | 'json' | 'markdown';
+    verbose: boolean;
+  };
+  paths: {
+    configDir: string;
+    cacheDir: string;
+  };
+}
 
-/**
- * Log levels for the application
- */
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+}
+
+export interface LLMProvider {
+  name: string;
+  models: string[];
+  isConfigured: boolean;
+}
+
+export interface CommandResult<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  executionTime?: number;
+}
+
+export interface FileOperation {
+  type: 'read' | 'write' | 'delete' | 'create';
+  path: string;
+  content?: string;
+  timestamp: Date;
+}
+
+export interface SessionContext {
+  id: string;
+  startTime: Date;
+  messages: ChatMessage[];
+  fileOperations: FileOperation[];
+  currentWorkingDirectory: string;
+}
+
+// Re-export commonly used types
+export type Result<T, E = Error> = 
+  | { success: true; data: T }
+  | { success: false; error: E };

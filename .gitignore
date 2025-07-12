@@ -7,3 +7,5 @@ dist/
 coverage/
 .nyc_output/
 .cli-coder-backups/
+/tmp/
+tests/*/output/
