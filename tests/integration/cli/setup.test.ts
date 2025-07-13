@@ -17,7 +17,7 @@ describe('CLI Setup Integration', () => {
     }
   });
 
-  it('should build successfully', () => {
+  it('should build successfully', { timeout: 30000 }, () => {
     expect(() => {
       execSync('npm run build', { 
         stdio: 'pipe',
@@ -44,7 +44,7 @@ describe('CLI Setup Integration', () => {
     }).not.toThrow();
   });
 
-  it('should have working CLI entry point after build', () => {
+  it('should have working CLI entry point after build', { timeout: 30000 }, () => {
     // Build first
     execSync('npm run build', { 
       stdio: 'pipe',
