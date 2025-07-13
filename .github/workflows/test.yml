@@ -159,7 +159,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: ['18', '22'] # Test LTS versions only
+        node-version: ['22'] # Test latest LTS only (Node 18 not compatible with dependencies)
 
     steps:
       - name: 📥 Checkout code
