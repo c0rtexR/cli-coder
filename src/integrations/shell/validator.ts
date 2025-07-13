@@ -9,55 +9,61 @@ interface ValidatorOptions {
   customDangerousPatterns?: string[];
 }
 
+interface DangerousPattern extends CommandPattern {
+  severity: 'critical' | 'high';
+}
+
 export class ShellValidator {
-  private readonly DANGEROUS_PATTERNS: CommandPattern[] = [
-    // File system destruction
-    { pattern: /rm\s+-rf\s*\//, type: 'dangerous', description: 'Root filesystem deletion' },
-    { pattern: /rm\s+-rf\s*\/\*/, type: 'dangerous', description: 'Filesystem destruction' },
-    { pattern: /rm\s+-rf\s*\/home/, type: 'dangerous', description: 'Home directory deletion' },
-    { pattern: /rm\s+-rf\s*\/etc/, type: 'dangerous', description: 'System config deletion' },
-    { pattern: /rm\s+-rf\s*\/usr/, type: 'dangerous', description: 'System binaries deletion' },
-    { pattern: /rm\s+-rf\s*\/var/, type: 'dangerous', description: 'System data deletion' },
+  private readonly DANGEROUS_PATTERNS: DangerousPattern[] = [
+    // File system destruction - Critical for system paths, High for general recursive removal
+    { pattern: /rm\s+-rf\s*\//, type: 'dangerous', description: 'Root filesystem deletion', severity: 'critical' },
+    { pattern: /rm\s+-rf\s*\/\*/, type: 'dangerous', description: 'Filesystem destruction', severity: 'critical' },
+    { pattern: /rm\s+-rf\s*\/home/, type: 'dangerous', description: 'Home directory deletion', severity: 'critical' },
+    { pattern: /rm\s+-rf\s*\/etc/, type: 'dangerous', description: 'System config deletion', severity: 'critical' },
+    { pattern: /rm\s+-rf\s*\/usr/, type: 'dangerous', description: 'System binaries deletion', severity: 'critical' },
+    { pattern: /rm\s+-rf\s*\/var/, type: 'dangerous', description: 'System data deletion', severity: 'critical' },
+    { pattern: /rm\s+-rf/, type: 'dangerous', description: 'Recursive file deletion', severity: 'high' },
     
-    // Privilege escalation
-    { pattern: /sudo\s+/, type: 'dangerous', description: 'Privilege escalation' },
-    { pattern: /su\s+root/, type: 'dangerous', description: 'Switch to root user' },
-    { pattern: /sudo\s+-s/, type: 'dangerous', description: 'Sudo shell access' },
-    { pattern: /sudo\s+su/, type: 'dangerous', description: 'Sudo to root' },
+    // Privilege escalation - Critical
+    { pattern: /sudo\s+/, type: 'dangerous', description: 'Privilege escalation', severity: 'critical' },
+    { pattern: /su\s+root/, type: 'dangerous', description: 'Switch to root user', severity: 'critical' },
+    { pattern: /sudo\s+-s/, type: 'dangerous', description: 'Sudo shell access', severity: 'critical' },
+    { pattern: /sudo\s+su/, type: 'dangerous', description: 'Sudo to root', severity: 'critical' },
     
-    // System modification
-    { pattern: /chmod\s+777/, type: 'dangerous', description: 'Dangerous permission change' },
-    { pattern: /chown\s+-R/, type: 'dangerous', description: 'Recursive ownership change' },
-    { pattern: /mkfs/, type: 'dangerous', description: 'Filesystem formatting' },
-    { pattern: /fdisk/, type: 'dangerous', description: 'Disk partitioning' },
-    { pattern: /dd\s+if=/, type: 'dangerous', description: 'Low-level disk operations' },
+    // System modification - Critical for sensitive files, High for others
+    { pattern: /chmod\s+777\s+\/etc\//, type: 'dangerous', description: 'Dangerous permission change', severity: 'critical' },
+    { pattern: /chmod\s+777/, type: 'dangerous', description: 'Dangerous permission change', severity: 'high' },
+    { pattern: /chown\s+-R/, type: 'dangerous', description: 'Recursive ownership change', severity: 'high' },
+    { pattern: /mkfs/, type: 'dangerous', description: 'Filesystem formatting', severity: 'critical' },
+    { pattern: /fdisk/, type: 'dangerous', description: 'Disk partitioning', severity: 'critical' },
+    { pattern: /dd\s+if=/, type: 'dangerous', description: 'Low-level disk operations', severity: 'critical' },
     
-    // System control
-    { pattern: /shutdown/, type: 'dangerous', description: 'System shutdown' },
-    { pattern: /reboot/, type: 'dangerous', description: 'System reboot' },
-    { pattern: /kill\s+-9\s+1/, type: 'dangerous', description: 'Kill init process' },
-    { pattern: /killall\s+-9/, type: 'dangerous', description: 'Force kill all processes' },
+    // System control - Critical
+    { pattern: /shutdown/, type: 'dangerous', description: 'System shutdown', severity: 'critical' },
+    { pattern: /reboot/, type: 'dangerous', description: 'System reboot', severity: 'critical' },
+    { pattern: /kill\s+-9\s+1/, type: 'dangerous', description: 'Kill init process', severity: 'critical' },
+    { pattern: /killall\s+-9/, type: 'dangerous', description: 'Force kill all processes', severity: 'critical' },
     
-    // Device access
-    { pattern: />\s*\/dev\/sd[a-z]/, type: 'dangerous', description: 'Direct device write' },
-    { pattern: /cat\s+\/dev\/sd[a-z]/, type: 'dangerous', description: 'Direct device read' },
-    { pattern: /wipefs/, type: 'dangerous', description: 'Filesystem signature removal' },
-    { pattern: /shred/, type: 'dangerous', description: 'Secure file deletion' },
+    // Device access - Critical
+    { pattern: />\s*\/dev\/sd[a-z]/, type: 'dangerous', description: 'Direct device write', severity: 'critical' },
+    { pattern: /cat\s+\/dev\/sd[a-z]/, type: 'dangerous', description: 'Direct device read', severity: 'critical' },
+    { pattern: /wipefs/, type: 'dangerous', description: 'Filesystem signature removal', severity: 'critical' },
+    { pattern: /shred/, type: 'dangerous', description: 'Secure file deletion', severity: 'critical' },
     
     // Command injection patterns - moved to injection check method for proper severity
     
-    // Obfuscation attempts
-    { pattern: /base64\s+-d.*sh/, type: 'dangerous', description: 'obfuscated command execution' },
-    { pattern: /curl.*\|\s*sh/, type: 'dangerous', description: 'obfuscated command execution' },
-    { pattern: /wget.*\|\s*bash/, type: 'dangerous', description: 'obfuscated command execution' },
-    { pattern: /python\s+-c.*os\.system/, type: 'dangerous', description: 'obfuscated command execution' },
-    { pattern: /node\s+-e.*exec/, type: 'dangerous', description: 'obfuscated command execution' },
-    { pattern: /perl\s+-e.*system/, type: 'dangerous', description: 'obfuscated command execution' },
+    // Obfuscation attempts - High
+    { pattern: /base64\s+-d.*sh/, type: 'dangerous', description: 'obfuscated command execution', severity: 'high' },
+    { pattern: /curl.*\|\s*sh/, type: 'dangerous', description: 'obfuscated command execution', severity: 'high' },
+    { pattern: /wget.*\|\s*bash/, type: 'dangerous', description: 'obfuscated command execution', severity: 'high' },
+    { pattern: /python\s+-c.*os\.system/, type: 'dangerous', description: 'obfuscated command execution', severity: 'high' },
+    { pattern: /node\s+-e.*exec/, type: 'dangerous', description: 'obfuscated command execution', severity: 'high' },
+    { pattern: /perl\s+-e.*system/, type: 'dangerous', description: 'obfuscated command execution', severity: 'high' },
   ];
 
   private readonly SAFE_PATTERNS: CommandPattern[] = [
     { pattern: /^git\s+/, type: 'safe', description: 'Git version control' },
-    { pattern: /^npm\s+(test|run|list|info|view)/, type: 'safe', description: 'NPM safe operations' },
+    { pattern: /^npm\s+(test|run|list|info|view|install)/, type: 'safe', description: 'NPM safe operations' },
     { pattern: /^ls\s/, type: 'safe', description: 'Directory listing' },
     { pattern: /^cat\s/, type: 'safe', description: 'File content display' },
     { pattern: /^grep\s/, type: 'safe', description: 'Text search' },
@@ -129,7 +135,19 @@ export class ShellValidator {
       };
     }
 
-    // Check custom dangerous patterns first
+    // Check for obfuscation first (before dangerous patterns to catch obfuscated dangerous commands)
+    const obfuscationResult = this.checkObfuscation(command);
+    if (!obfuscationResult.isValid) {
+      return obfuscationResult;
+    }
+
+    // Check for command injection before dangerous patterns (injection should be detected specifically)
+    const injectionResult = this.checkCommandInjection(command);
+    if (!injectionResult.isValid) {
+      return injectionResult;
+    }
+
+    // Check custom dangerous patterns
     for (const pattern of this.customDangerousPatterns) {
       if (command.includes(pattern)) {
         return {
@@ -147,7 +165,7 @@ export class ShellValidator {
     );
 
     if (dangerousMatch) {
-      let reason = `Dangerous command detected: ${dangerousMatch.description}`;
+      let reason = `dangerous command detected: ${dangerousMatch.description}`;
       let suggestion = 'avoid potentially harmful operations';
       
       // Customize messages based on type
@@ -156,33 +174,23 @@ export class ShellValidator {
         suggestion = 'without sudo if possible';
       } else if (dangerousMatch.description.includes('deletion') || dangerousMatch.description.includes('destruction') || dangerousMatch.description.includes('Root filesystem') || dangerousMatch.description.includes('Filesystem') || dangerousMatch.description.includes('Home directory') || dangerousMatch.description.includes('System')) {
         reason = `dangerous command detected: file system destruction`;
-        suggestion = 'safer alternative operations';
+        suggestion = 'avoid potentially harmful operations, use safer alternative operations';
       } else if (dangerousMatch.description.includes('permission')) {
+        reason = `dangerous command detected: ${dangerousMatch.description}`;
         suggestion = 'appropriate permissions instead';
       } else if (dangerousMatch.description.includes('obfuscated')) {
-        reason = `obfuscated command detected`;
+        reason = `dangerous command detected: obfuscated command execution`;
+        suggestion = 'avoid obfuscated commands';
       } else {
-        reason = `dangerous command detected`;
+        reason = `dangerous command detected: ${dangerousMatch.description}`;
       }
       
       return {
         isValid: false,
         reason,
-        severity: 'critical',
+        severity: dangerousMatch.severity,
         suggestion,
       };
-    }
-
-    // Check for command injection
-    const injectionResult = this.checkCommandInjection(command);
-    if (!injectionResult.isValid) {
-      return injectionResult;
-    }
-
-    // Check for obfuscation
-    const obfuscationResult = this.checkObfuscation(command);
-    if (!obfuscationResult.isValid) {
-      return obfuscationResult;
     }
 
     // Check custom safe patterns
@@ -226,7 +234,14 @@ export class ShellValidator {
 
     if (suspiciousMatch) {
       let reason = `Suspicious pattern detected: ${suspiciousMatch.description}`;
-      if (suspiciousMatch.description.includes('flag')) {
+      // Check if it's a flag-related pattern
+      if (suspiciousMatch.description.includes('flag') || 
+          suspiciousMatch.description.includes('Force') || 
+          suspiciousMatch.description.includes('Recursive') ||
+          suspiciousMatch.description.includes('Hard operation') ||
+          suspiciousMatch.description.includes('Prune') ||
+          suspiciousMatch.description.includes('Delete') ||
+          suspiciousMatch.description.includes('Remove')) {
         reason = `Suspicious pattern detected: suspicious flags`;
       }
       
@@ -305,23 +320,24 @@ export class ShellValidator {
 
   private checkCommandInjection(command: string): ShellValidationResult {
     const injectionPatterns = [
-      { pattern: /;[\s]*rm/, description: 'command injection' },
-      { pattern: /\|[\s]*rm/, description: 'command injection' },
-      { pattern: /&&[\s]*rm/, description: 'command injection' },
-      { pattern: /\|\|[\s]*rm/, description: 'command injection' },
-      { pattern: /`[^`]*rm/, description: 'command substitution' },
-      { pattern: /\$\([^)]*rm/, description: 'command substitution' },
-      { pattern: /;[\s]*sudo/, description: 'command injection' },
-      { pattern: /\|[\s]*(rm|sudo)/, description: 'command injection' },
-      { pattern: /&&[\s]*sudo/, description: 'command injection' },
-      { pattern: /\|\s+(rm|sudo|tee|xargs\s+rm)/, description: 'command injection' },
+      // Semicolon injection
+      { pattern: /;[\s]*\w+/, description: 'command injection' },
+      // Pipe injection
+      { pattern: /\|[\s]*\w+/, description: 'command injection' },
+      // AND/OR injection
+      { pattern: /&&[\s]*\w+/, description: 'command injection' },
+      { pattern: /\|\|[\s]*\w+/, description: 'command injection' },
+      // Command substitution (backticks)
+      { pattern: /`[^`]*\w+[^`]*`/, description: 'command substitution' },
+      // Command substitution (dollar-parentheses)
+      { pattern: /\$\([^)]*\w+[^)]*\)/, description: 'command substitution' },
     ];
 
     for (const { pattern, description } of injectionPatterns) {
       if (pattern.test(command)) {
         return {
           isValid: false,
-          reason: `Command injection detected: ${description}`,
+          reason: `command injection detected: ${description}`,
           severity: 'high',
           suggestion: 'Command injection attempts are not allowed',
         };
@@ -333,19 +349,19 @@ export class ShellValidator {
 
   private checkObfuscation(command: string): ShellValidationResult {
     const obfuscationPatterns = [
-      { pattern: /base64\s+-d.*sh/, description: 'obfuscated' },
-      { pattern: /curl.*\|\s*(sh|bash)/, description: 'obfuscated' },
-      { pattern: /wget.*\|\s*(sh|bash)/, description: 'obfuscated' },
-      { pattern: /python\s+-c.*os\.system/, description: 'obfuscated' },
-      { pattern: /node\s+-e.*exec/, description: 'obfuscated' },
-      { pattern: /perl\s+-e.*system/, description: 'obfuscated' },
+      { pattern: /base64\s+-d.*sh/, description: 'obfuscated command execution' },
+      { pattern: /curl.*\|\s*(sh|bash)/, description: 'obfuscated command execution' },
+      { pattern: /wget.*\|\s*(sh|bash)/, description: 'obfuscated command execution' },
+      { pattern: /python\s+-c.*os\.system/, description: 'obfuscated command execution' },
+      { pattern: /node\s+-e.*exec/, description: 'obfuscated command execution' },
+      { pattern: /perl\s+-e.*system/, description: 'obfuscated command execution' },
     ];
 
     for (const { pattern, description } of obfuscationPatterns) {
       if (pattern.test(command)) {
         return {
           isValid: false,
-          reason: `Potentially ${description} command detected`,
+          reason: `obfuscated command detected: ${description}`,
           severity: 'high',
           suggestion: 'Obfuscated commands are not allowed for security',
         };

@@ -1,8 +1,11 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
+import React from 'react';
+import { render } from 'ink';
 import { ConfigManager } from '../config/manager';
 import { llmService } from '../integrations/llm';
 import { ChatInterface } from '../core/chat/interface';
+import { TUIApp } from '../core/tui/app';
 import { ChatSession } from '../types';
 import { handleError } from '../utils/errors';
 
@@ -12,6 +15,7 @@ export const chatCommand = new Command('chat')
   .description('Start interactive chat session')
   .option('-m, --model <model>', 'LLM model to use')
   .option('-p, --provider <provider>', 'LLM provider (openai, anthropic, gemini)')
+  .option('--tui', 'Use advanced terminal UI (experimental)')
   .option('--no-git', 'Disable git integration')
   .action(async (options) => {
     try {
@@ -24,6 +28,7 @@ export const chatCommand = new Command('chat')
 interface ChatCommandOptions {
   model?: string;
   provider?: string;
+  tui?: boolean;
   git?: boolean;
 }
 
@@ -56,7 +61,14 @@ async function startChatSession(options: ChatCommandOptions): Promise<void> {
     updatedAt: new Date(),
   };
 
-  // Start chat
-  const chatInterface = new ChatInterface(session, config);
-  await chatInterface.start();
+  // Start appropriate interface
+  if (options.tui) {
+    // Start TUI interface
+    const app = React.createElement(TUIApp, { session, config });
+    render(app);
+  } else {
+    // Start basic terminal interface
+    const chatInterface = new ChatInterface(session, config);
+    await chatInterface.start();
+  }
 }

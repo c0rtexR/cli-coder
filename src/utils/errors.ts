@@ -19,7 +19,9 @@ export function setupErrorHandling(): void {
     if (process.env.NODE_ENV === 'development') {
       console.error(error.stack);
     }
-    process.exit(1);
+    if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
+      process.exit(1);
+    }
   });
 }
 
@@ -35,5 +37,9 @@ export function handleError(error: Error | CLIErrorClass): void {
       console.error(error.stack);
     }
   }
-  process.exit(1);
+  
+  // Don't exit in test environments
+  if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
+    process.exit(1);
+  }
 }
