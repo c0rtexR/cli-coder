@@ -138,10 +138,18 @@ export class ChatInterface {
   }
 
   public showHelp(): void {
-    console.log(chalk.blue.bold('Available Commands:'));
-    console.log(chalk.gray('/help     - Show this help'));
-    console.log(chalk.gray('/clear    - Clear chat history'));
-    console.log(chalk.gray('/context  - Show file context'));
-    console.log(chalk.gray('/exit     - Exit chat'));
+    console.log(chalk.blue('Available Commands:'));
+    console.log(chalk.gray('/help               - Show this help'));
+    console.log(chalk.gray('/clear              - Clear chat history'));
+    console.log(chalk.gray('/context            - Show files in context'));
+    console.log(chalk.gray('/add <pattern>      - Add files to context (supports glob patterns)'));
+    console.log(chalk.gray('/remove <file>      - Remove files from context'));
+    console.log(chalk.gray('/remove all         - Remove all files from context'));
+    console.log(chalk.gray('/exit               - Exit chat'));
+    console.log();
+    console.log(chalk.blue('File Pattern Examples:'));
+    console.log(chalk.gray('/add src/main.ts    - Add single file'));
+    console.log(chalk.gray('/add src/**/*.ts    - Add all TypeScript files in src/'));
+    console.log(chalk.gray('/add *.json         - Add all JSON files in current directory'));
   }
 }
