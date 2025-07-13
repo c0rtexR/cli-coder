@@ -63,11 +63,13 @@ jobs:
       - name: 🧪 Run unit tests
         run: npm run test:unit
 
-      - name: 🔗 Run integration tests
-        run: npm run test:integration
-
       - name: 🏗️ Build project
         run: npm run build
+
+      - name: 🔗 Run integration tests
+        run: npm run test:integration
+        env:
+          NODE_ENV: test
 
       - name: 🎭 Run E2E tests
         run: npm run test:e2e

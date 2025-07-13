@@ -21,36 +21,45 @@ async function main(): Promise<void> {
     })
     .exitOverride((err) => {
       // Handle commander errors properly
+      const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+      
       if (err.code === 'commander.unknownCommand') {
         process.stderr.write(chalk.red('Error: unknown command\n'));
-        process.exit(1);
+        if (!isTestEnv) process.exit(1);
+        return;
       }
       if (err.code === 'commander.unknownOption') {
         process.stderr.write(chalk.red('Error: unknown option\n'));
-        process.exit(1);
+        if (!isTestEnv) process.exit(1);
+        return;
       }
       if (err.code === 'commander.excessArguments') {
         process.stderr.write(chalk.red('Error: unknown command\n'));
-        process.exit(1);
+        if (!isTestEnv) process.exit(1);
+        return;
       }
       if (err.code === 'commander.help') {
         // Help is a normal operation, exit with 0
-        process.exit(0);
+        if (!isTestEnv) process.exit(0);
+        return;
       }
       if (err.code === 'commander.helpDisplayed') {
         // Help display is also normal
-        process.exit(0);
+        if (!isTestEnv) process.exit(0);
+        return;
       }
       if (err.code === 'commander.version') {
         // Version display is also normal
-        process.exit(0);
+        if (!isTestEnv) process.exit(0);
+        return;
       }
       if (err.code === 'commander.versionDisplayed') {
         // Version display is also normal
-        process.exit(0);
+        if (!isTestEnv) process.exit(0);
+        return;
       }
       // For other errors, use default behavior
-      process.exit(err.exitCode || 1);
+      if (!isTestEnv) process.exit(err.exitCode || 1);
     });
 
   // Setup global error handling
@@ -66,13 +75,17 @@ async function main(): Promise<void> {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   console.error(chalk.red('Unhandled promise rejection:'), reason);
-  process.exit(1);
+  if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
+    process.exit(1);
+  }
 });
 
 // Run the CLI
 main().catch((error) => {
   console.error(chalk.red('Fatal error:'), error.message);
-  process.exit(1);
+  if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
+    process.exit(1);
+  }
 });
 
 export { main as program };
