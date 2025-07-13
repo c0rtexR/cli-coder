@@ -94,7 +94,7 @@ describe('File Commands Integration', () => {
     // Mock console and inquirer
     originalConsoleLog = console.log;
     console.log = vi.fn();
-    mockInquirer.prompt.mockResolvedValue({ proceed: true });
+    mockInquirer.prompt.mockResolvedValue({ action: 'cancel' });
 
     // Change to test directory for relative paths
     process.chdir(testDir);
@@ -181,13 +181,12 @@ describe('File Commands Integration', () => {
       expect(console.log).toHaveBeenCalledWith('All files are already in context');
     });
 
-    it('should show usage when no patterns provided', async () => {
+    it('should show interactive file selection when no patterns provided', async () => {
       // Act
       await parser.parseCommand('/add');
 
       // Assert
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Usage: /add <file-pattern>'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Examples:'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Interactive file selection'));
     });
 
     it('should handle file not found errors', async () => {

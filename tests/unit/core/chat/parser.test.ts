@@ -12,6 +12,11 @@ import { ChatSession } from '../../../../src/types';
 // Mock dependencies
 vi.mock('../../../../src/integrations/filesystem/service');
 vi.mock('../../../../src/utils/errors');
+vi.mock('inquirer', () => ({
+  default: {
+    prompt: vi.fn().mockResolvedValue({ action: 'cancel' }),
+  },
+}));
 vi.mock('chalk', () => ({
   default: {
     red: vi.fn((text) => text),
@@ -133,13 +138,12 @@ describe('CommandParser', () => {
   });
 
   describe('add command', () => {
-    it('should show usage when no arguments provided', async () => {
+    it('should show interactive file selection when no arguments provided', async () => {
       // Act
       await parser.parseCommand('/add');
 
       // Assert
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Usage: /add <file-pattern>'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Examples:'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Interactive file selection'));
     });
 
     it('should add files to context successfully', async () => {

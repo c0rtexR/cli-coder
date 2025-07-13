@@ -20,6 +20,12 @@ export * from './session.types';
 // TUI Types
 export * from './tui.types';
 
+// Clipboard Types
+export * from './clipboard.types';
+
+// File Path Types
+export * from './filepath.types';
+
 // Utility Types
 export type Result<T, E = Error> = {
   success: true;
