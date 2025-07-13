@@ -19,7 +19,10 @@ vi.mock('ora', () => ({
 }));
 vi.mock('chalk', () => ({
   default: {
-    blue: { bold: vi.fn((text) => text) },
+    blue: Object.assign(
+      vi.fn((text) => text),
+      { bold: vi.fn((text) => text) }
+    ),
     gray: vi.fn((text) => text),
     cyan: vi.fn((text) => text),
     yellow: vi.fn((text) => text),

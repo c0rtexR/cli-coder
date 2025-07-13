@@ -64,3 +64,24 @@ export interface ShellHistory {
   /** Maximum number of entries to keep */
   maxEntries: number;
 }
+
+export interface ShellValidationResult {
+  /** Whether the command is valid/safe */
+  isValid: boolean;
+  /** Reason for validation failure */
+  reason?: string;
+  /** Severity level of the issue */
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  /** Suggested action for the user */
+  suggestion?: string;
+}
+
+export interface CommandPattern {
+  /** Pattern to match against */
+  pattern: string | RegExp;
+  /** Whether this pattern represents a safe or dangerous command */
+  type: 'safe' | 'dangerous' | 'suspicious';
+  /** Description of what this pattern matches */
+  description: string;
+}
+
