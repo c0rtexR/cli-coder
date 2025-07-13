@@ -35,7 +35,7 @@ async function startChatSession(options: ChatCommandOptions): Promise<void> {
   
   // Override with command options
   if (options.model) config.llm.model = options.model;
-  if (options.provider) config.llm.provider = options.provider;
+  if (options.provider) config.llm.provider = options.provider as 'openai' | 'anthropic' | 'gemini';
 
   // Initialize LLM service
   try {
