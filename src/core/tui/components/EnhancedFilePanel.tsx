@@ -30,16 +30,30 @@ export const EnhancedFilePanel: React.FC<FilePanelProps> = ({
       setError(null);
       
       try {
-        const tree = await controller.loadDirectory(process.cwd(), {
-          showHidden,
-          respectGitignore: true
-        });
+        let tree: FileTreeNode[] = [];
+        
+        try {
+          // Try to load the real filesystem tree
+          tree = await controller.loadDirectory(process.cwd(), {
+            showHidden,
+            respectGitignore: true
+          });
+        } catch (fsError) {
+          // If filesystem loading fails, start with empty tree
+          tree = [];
+        }
+        
+        // Create virtual nodes for session context files that don't exist in the filesystem
+        const contextFiles = session.context.map(file => file.path);
+        const virtualNodes = createVirtualNodesFromContext(session.context, tree);
+        
+        // Merge virtual nodes with real tree
+        const mergedTree = mergeVirtualNodes(tree, virtualNodes);
         
         // Update context status based on session files
-        const contextFiles = session.context.map(file => file.path);
-        fileTreeService.updateContextStatus(tree, contextFiles);
+        fileTreeService.updateContextStatus(mergedTree, contextFiles);
         
-        setFileTree(tree);
+        setFileTree(mergedTree);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load file tree');
       } finally {
@@ -53,7 +67,12 @@ export const EnhancedFilePanel: React.FC<FilePanelProps> = ({
   // Set up controller event listeners
   useEffect(() => {
     const handleTreeLoaded = (tree: FileTreeNode[]) => {
-      setFileTree(tree);
+      // Don't override our merged tree - instead merge the new tree with virtual nodes
+      const contextFiles = session.context.map(file => file.path);
+      const virtualNodes = createVirtualNodesFromContext(session.context, tree);
+      const mergedTree = mergeVirtualNodes(tree, virtualNodes);
+      fileTreeService.updateContextStatus(mergedTree, contextFiles);
+      setFileTree(mergedTree);
     };
 
     const handleFileSelected = (path: string) => {
@@ -214,6 +233,7 @@ export const EnhancedFilePanel: React.FC<FilePanelProps> = ({
         showHidden={showHidden}
         multiSelectMode={multiSelectMode}
         selectedFiles={selectedFiles}
+        contextFileCount={session.context.length}
       />
 
       {/* Additional controls when active */}
@@ -281,4 +301,66 @@ function getLanguageFromExtension(extension: string): string {
   };
 
   return languageMap[extension.toLowerCase()] || 'text';
+}
+
+// Helper function to create virtual nodes from session context files
+function createVirtualNodesFromContext(
+  contextFiles: Array<{ path: string; content: string; size?: number; lastModified?: Date }>,
+  existingTree: FileTreeNode[]
+): FileTreeNode[] {
+  const virtualNodes: FileTreeNode[] = [];
+  const existingPaths = new Set<string>();
+  
+  // Collect all existing file paths
+  const collectPaths = (nodes: FileTreeNode[]) => {
+    for (const node of nodes) {
+      existingPaths.add(node.path);
+      if (node.children) {
+        collectPaths(node.children);
+      }
+    }
+  };
+  collectPaths(existingTree);
+  
+  // Create virtual nodes for files that don't exist in the real tree
+  for (const file of contextFiles) {
+    if (!existingPaths.has(file.path)) {
+      const pathParts = file.path.split('/').filter(Boolean);
+      const fileName = pathParts[pathParts.length - 1];
+      const extension = fileName.includes('.') ? '.' + fileName.split('.').pop() : '';
+      
+      const virtualNode: FileTreeNode = {
+        id: `virtual-${file.path}`,
+        name: fileName,
+        path: file.path,
+        type: 'file',
+        extension,
+        size: file.size || file.content.length,
+        modifiedAt: file.lastModified || new Date(),
+        isSelected: false,
+        isInContext: true,
+        isIgnored: false
+      };
+      
+      virtualNodes.push(virtualNode);
+    }
+  }
+  
+  return virtualNodes;
+}
+
+// Helper function to merge virtual nodes with real tree
+function mergeVirtualNodes(realTree: FileTreeNode[], virtualNodes: FileTreeNode[]): FileTreeNode[] {
+  // If no virtual nodes, return the real tree
+  if (virtualNodes.length === 0) {
+    return realTree;
+  }
+  
+  // If no real tree, return just the virtual nodes
+  if (realTree.length === 0) {
+    return virtualNodes;
+  }
+  
+  // Merge virtual nodes into the real tree
+  return [...realTree, ...virtualNodes];
 }

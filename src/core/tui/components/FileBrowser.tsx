@@ -14,7 +14,8 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({
   searchQuery,
   showHidden,
   multiSelectMode,
-  selectedFiles
+  selectedFiles,
+  contextFileCount
 }) => {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [searchMode, setSearchMode] = useState(false);
@@ -290,6 +291,11 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({
         <Text color={isActive ? "green" : "gray"} bold>
           📁 Files
         </Text>
+        {contextFileCount != null && contextFileCount > 0 && (
+          <Text color={isActive ? "green" : "gray"}>
+            {" "}({contextFileCount} files)
+          </Text>
+        )}
         <Spacer />
         {multiSelectMode && (
           <Text color="yellow" bold>

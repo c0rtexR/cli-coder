@@ -11,6 +11,7 @@ import {
 import { CLIErrorClass } from '../../../utils/errors';
 import { EventEmitter } from 'events';
 import { watch, FSWatcher } from 'fs';
+import * as path from 'path';
 
 export class FileBrowserController extends EventEmitter implements FileBrowserControllerInterface {
   private state: FileBrowserState = {
@@ -32,6 +33,7 @@ export class FileBrowserController extends EventEmitter implements FileBrowserCo
   private currentTree: FileTreeNode[] = [];
   private fileWatcher: FSWatcher | null = null;
   private watchingEnabled = false;
+  private originalRootPath: string = process.cwd();
 
   constructor(private fileTreeService: FileTreeService) {
     super();
@@ -40,6 +42,7 @@ export class FileBrowserController extends EventEmitter implements FileBrowserCo
   async loadDirectory(path: string, options: FileTreeOptions = {}): Promise<FileTreeNode[]> {
     try {
       this.state.currentPath = path;
+      this.originalRootPath = path; // Store the original root path
       
       const treeOptions = {
         ...options,
@@ -122,6 +125,7 @@ export class FileBrowserController extends EventEmitter implements FileBrowserCo
         };
         
         const children = await this.fileTreeService.buildFileTree(fullPath, childOptions);
+        
         node.children = children;
         
         // Update context status for children
@@ -409,10 +413,47 @@ export class FileBrowserController extends EventEmitter implements FileBrowserCo
     }
   }
 
-  private resolveFullPath(relativePath: string): string {
-    return relativePath.startsWith('/') 
-      ? relativePath 
-      : `${this.state.currentPath}/${relativePath}`;
+  private resolveFullPath(nodePath: string): string {
+    // If it's already an absolute path, return as-is
+    if (nodePath.startsWith('/')) {
+      return nodePath;
+    }
+    
+    // For relative paths, we need to resolve them correctly.
+    // If the node path contains path separators, it's already relative to the root
+    // If it's just a filename, we need to find the parent directory
+    if (nodePath.includes('/')) {
+      // Path like "src/components" - relative to the original root
+      return path.join(this.originalRootPath, nodePath);
+    } else {
+      // Path like "components" - need to find which expanded directory contains this
+      const parentNode = this.findParentOfNode(nodePath);
+      if (parentNode) {
+        return path.join(this.originalRootPath, parentNode.path, nodePath);
+      }
+      // Fallback to current path
+      return path.join(this.state.currentPath, nodePath);
+    }
+  }
+
+  private findParentOfNode(nodeName: string): FileTreeNode | null {
+    const searchInTree = (nodes: FileTreeNode[]): FileTreeNode | null => {
+      for (const node of nodes) {
+        if (node.children) {
+          for (const child of node.children) {
+            if (child.name === nodeName) {
+              return node;
+            }
+          }
+          // Recursively search in children
+          const found = searchInTree(node.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    return searchInTree(this.currentTree);
   }
 
   private async handleFileSystemEvent(event: FileSystemEvent): Promise<void> {

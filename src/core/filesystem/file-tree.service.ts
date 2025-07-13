@@ -162,6 +162,34 @@ export class FileTreeService implements FileTreeServiceInterface {
     }
   }
 
+  async buildDirectoryChildren(
+    directoryPath: string, 
+    rootPath: string,
+    options: FileTreeOptions = {}
+  ): Promise<FileTreeNode[]> {
+    const {
+      maxDepth = 1,
+      showHidden = false,
+      excludePatterns = [],
+      respectGitignore = true
+    } = options;
+
+    const allExcludePatterns = [
+      ...this.DEFAULT_EXCLUDED_PATTERNS,
+      ...excludePatterns
+    ];
+
+    return this.buildDirectoryTree(
+      rootPath,
+      directoryPath,
+      0,
+      maxDepth,
+      showHidden,
+      respectGitignore,
+      allExcludePatterns
+    );
+  }
+
   searchFiles(tree: FileTreeNode[], options: FileTreeSearchOptions): FileTreeNode[] {
     const {
       query,

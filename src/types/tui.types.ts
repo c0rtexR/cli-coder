@@ -164,6 +164,7 @@ export interface FileBrowserProps {
   showHidden: boolean;
   multiSelectMode: boolean;
   selectedFiles: string[];
+  contextFileCount?: number;
 }
 
 export interface FileBrowserState {
