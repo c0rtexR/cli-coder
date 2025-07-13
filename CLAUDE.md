@@ -197,12 +197,12 @@ describe("UserForm Component", () => {
 
     // Test UI structure
     expect(lastFrame()).toContain("Enter username:");
-    
+
     // Test logic directly rather than keyboard simulation
     // For components with useInput hooks, test the handler functions directly
     // or manipulate component state/props to trigger the desired behavior
     const mockFormData = { username: "testuser", email: "test@example.com" };
-    
+
     // Trigger submit through component logic
     expect(onSubmit).toHaveBeenCalledWith(mockFormData);
   });
@@ -211,10 +211,10 @@ describe("UserForm Component", () => {
     // AVOID: stdin.write() for keyboard simulation (unreliable)
     // INSTEAD: Test the actual useInput hook handlers or component state changes
     const { lastFrame } = render(<UserForm onSubmit={jest.fn()} />);
-    
+
     // Test that UI shows correct state/content
     expect(lastFrame()).toContain("Expected UI content");
-    
+
     // Test component behavior by examining rendered output or state
     // rather than simulating keyboard input
   });
@@ -231,17 +231,17 @@ export function handleError(error: Error): void {
   if (error instanceof CLIErrorClass) {
     console.error(chalk.red(`Error [${error.code}]:`), error.message);
     if (error.details) {
-      console.error(chalk.gray('Details:'), error.details);
+      console.error(chalk.gray("Details:"), error.details);
     }
   } else {
-    console.error(chalk.red('Unexpected error:'), error.message);
-    if (process.env.NODE_ENV === 'development') {
+    console.error(chalk.red("Unexpected error:"), error.message);
+    if (process.env.NODE_ENV === "development") {
       console.error(error.stack);
     }
   }
-  
+
   // CRITICAL: Don't exit in test environments
-  if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
+  if (process.env.NODE_ENV !== "test" && process.env.VITEST !== "true") {
     process.exit(1);
   }
 }
@@ -254,18 +254,18 @@ export function handleError(error: Error): void {
 describe("File Operations", () => {
   it("should handle files in deterministic order", async () => {
     // Files from glob patterns return in alphabetical order, not creation order
-    const files = await fileService.addFiles('src/**/*.ts');
-    
+    const files = await fileService.addFiles("src/**/*.ts");
+
     // WRONG: Assumes creation order
     // expect(files[0].content).toBe('expected content');
-    
+
     // CORRECT: Find by specific criteria
-    const mainFile = files.find(f => f.path === 'src/main.ts');
-    expect(mainFile?.content).toBe('expected content');
-    
+    const mainFile = files.find((f) => f.path === "src/main.ts");
+    expect(mainFile?.content).toBe("expected content");
+
     // Or test that all expected files are present
-    expect(files.map(f => f.path)).toEqual(
-      expect.arrayContaining(['src/main.ts', 'src/utils.ts'])
+    expect(files.map((f) => f.path)).toEqual(
+      expect.arrayContaining(["src/main.ts", "src/utils.ts"])
     );
   });
 });
@@ -278,8 +278,8 @@ describe("File Operations", () => {
 describe("TUI Component - WRONG", () => {
   it("should switch panels with Tab", () => {
     const { stdin, lastFrame } = render(<App />);
-    stdin.write('\t'); // Unreliable in test environment
-    expect(lastFrame()).toContain('Active: chat');
+    stdin.write("\t"); // Unreliable in test environment
+    expect(lastFrame()).toContain("Active: chat");
   });
 });
 
@@ -287,23 +287,23 @@ describe("TUI Component - WRONG", () => {
 describe("TUI Component - CORRECT", () => {
   it("should support panel switching functionality", () => {
     const { lastFrame } = render(<App />);
-    
+
     // Test UI structure supports switching
-    expect(lastFrame()).toContain('💬 Chat');
-    expect(lastFrame()).toContain('📁 Files');
-    expect(lastFrame()).toContain('⌨️ Input');
-    expect(lastFrame()).toContain('Active: input'); // Default state
+    expect(lastFrame()).toContain("💬 Chat");
+    expect(lastFrame()).toContain("📁 Files");
+    expect(lastFrame()).toContain("⌨️ Input");
+    expect(lastFrame()).toContain("Active: input"); // Default state
   });
-  
+
   it("should handle state changes via session manipulation", async () => {
     const { lastFrame } = render(<App session={mockSession} />);
-    
+
     // Simulate changes through data, not keyboard
     mockSession.messages.push(newMessage);
     mockSession.context = mockSession.context.slice(0, 1);
-    
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
     // Assert UI reflects changes
     expect(mockSession.messages).toHaveLength(3);
     expect(mockSession.context).toHaveLength(1);
@@ -319,22 +319,22 @@ describe("CLI Command Integration", () => {
   it("should handle interactive commands correctly", async () => {
     // For interactive commands that don't exit quickly
     try {
-      await cli.run(['chat'], { timeout: 1000 });
+      await cli.run(["chat"], { timeout: 1000 });
     } catch (error) {
       // Expect timeout since chat starts interactive session
-      expect((error as Error).message).toContain('timed out');
+      expect((error as Error).message).toContain("timed out");
     }
   });
-  
+
   it("should validate configuration schema integration", async () => {
     // Ensure tests match actual schema requirements
     const config = {
-      llm: { provider: 'openai', model: 'gpt-4', apiKey: 'key' },
+      llm: { provider: "openai", model: "gpt-4", apiKey: "key" },
       shell: { defaultTimeout: 30000 },
-      editor: { defaultEditor: 'code', tempDir: '/tmp' },
-      session: { saveHistory: true, maxHistorySize: 100 }
+      editor: { defaultEditor: "code", tempDir: "/tmp" },
+      session: { saveHistory: true, maxHistorySize: 100 },
     };
-    
+
     // Test with complete, valid configuration
     const result = await configManager.loadConfig();
     expect(result).toMatchObject(expect.objectContaining(config));
@@ -622,3 +622,122 @@ Your implementation is successful when:
 7. **Performance targets are met**
 8. **Test suite is stable and reliable** (no flaky tests due to timing or keyboard simulation)
 9. **All interactive components properly handle test vs production environments**
+
+### Virtual File Tree Creation for Session Context Files
+
+**Location:** `src/core/tui/components/EnhancedFilePanel.tsx`
+**Problem:** Session context files not displaying in TUI file browser when they don't exist in real filesystem
+**Solution:**
+
+```typescript
+// Helper function to create virtual nodes from session context files
+function createVirtualNodesFromContext(
+  contextFiles: Array<{
+    path: string;
+    content: string;
+    size?: number;
+    lastModified?: Date;
+  }>,
+  existingTree: FileTreeNode[]
+): FileTreeNode[] {
+  const virtualNodes: FileTreeNode[] = [];
+  const existingPaths = new Set<string>();
+
+  // Collect all existing file paths
+  const collectPaths = (nodes: FileTreeNode[]) => {
+    for (const node of nodes) {
+      existingPaths.add(node.path);
+      if (node.children) {
+        collectPaths(node.children);
+      }
+    }
+  };
+  collectPaths(existingTree);
+
+  // Create virtual nodes for files that don't exist in the real tree
+  for (const file of contextFiles) {
+    if (!existingPaths.has(file.path)) {
+      const pathParts = file.path.split("/").filter(Boolean);
+      const fileName = pathParts[pathParts.length - 1];
+      const extension = fileName.includes(".")
+        ? "." + fileName.split(".").pop()
+        : "";
+
+      const virtualNode: FileTreeNode = {
+        id: `virtual-${file.path}`,
+        name: fileName,
+        path: file.path,
+        type: "file",
+        extension,
+        size: file.size || file.content.length,
+        modifiedAt: file.lastModified || new Date(),
+        isSelected: false,
+        isInContext: true,
+        isIgnored: false,
+      };
+
+      virtualNodes.push(virtualNode);
+    }
+  }
+
+  return virtualNodes;
+}
+
+// Helper function to merge virtual nodes with real tree
+function mergeVirtualNodes(
+  realTree: FileTreeNode[],
+  virtualNodes: FileTreeNode[]
+): FileTreeNode[] {
+  if (virtualNodes.length === 0) return realTree;
+  if (realTree.length === 0) return virtualNodes;
+  return [...realTree, ...virtualNodes];
+}
+```
+
+**Key Pattern:** TUI file browsers can display virtual files from session context alongside real filesystem files
+
+### React/Ink Conditional Rendering Critical Fix
+
+**Location:** `src/core/tui/components/FileBrowser.tsx`
+**Problem:** `{contextFileCount && ...}` renders falsy `0` causing "Text string '0' must be rendered inside <Text> component" error
+**Solution:**
+
+```typescript
+// WRONG - renders 0 when contextFileCount is 0
+{
+  contextFileCount && contextFileCount > 0 && (
+    <Text>({contextFileCount} files)</Text>
+  );
+}
+
+// CORRECT - explicit null check prevents rendering 0
+{
+  contextFileCount != null && contextFileCount > 0 && (
+    <Text>({contextFileCount} files)</Text>
+  );
+}
+```
+
+**Critical Rule:** Always use explicit null checks instead of truthy/falsy checks when rendering numbers in Ink components
+
+### Integration Test Async Timing Pattern
+
+**Location:** `tests/integration/tui/tui-app.integration.test.tsx`
+**Problem:** Tests checking TUI output before async file loading completes
+**Solution:**
+
+```typescript
+it("should handle actual TypeScript file content", async () => {
+  const { lastFrame } = render(
+    <TUIApp session={mockSession} config={mockConfig} />
+  );
+
+  // Wait for async file loading to complete
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  const output = lastFrame();
+  expect(output).toContain("complex-component.tsx");
+});
+```
+
+**Pattern:** Integration tests with TUI components need async delays for proper rendering

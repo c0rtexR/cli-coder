@@ -206,7 +206,7 @@ describe('TUI App Integration Tests', () => {
   });
 
   describe('Real Data Integration', () => {
-    it('should handle actual TypeScript file content', () => {
+    it('should handle actual TypeScript file content', async () => {
       // Arrange
       mockSession.context = [
         {
@@ -305,6 +305,9 @@ async function fetchUsers(): Promise<User[]> {
 
       // Act
       const { lastFrame } = render(<TUIApp session={mockSession} config={mockConfig} />);
+
+      // Wait for async file loading to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Assert - TUI should handle complex TypeScript file content
       const output = lastFrame();
