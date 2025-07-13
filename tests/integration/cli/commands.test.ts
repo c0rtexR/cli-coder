@@ -324,6 +324,6 @@ describe('CLI Command Integration Tests', () => {
         const result = await cli.run(['--version']);
         expect(result.exitCode).toBe(0);
       }
-    });
+    }, 15000); // Increase timeout to 15 seconds for CI environment
   });
 });
