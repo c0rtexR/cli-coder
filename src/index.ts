@@ -11,7 +11,47 @@ async function main(): Promise<void> {
   program
     .name('cli-coder')
     .description('AI-powered CLI coding assistant')
-    .version('0.1.0');
+    .version('0.1.0')
+    .configureOutput({
+      writeErr: (str) => process.stderr.write(str),
+      writeOut: (str) => process.stdout.write(str),
+      outputError: (str, write) => {
+        write(chalk.red(str));
+      }
+    })
+    .exitOverride((err) => {
+      // Handle commander errors properly
+      if (err.code === 'commander.unknownCommand') {
+        process.stderr.write(chalk.red('Error: unknown command\n'));
+        process.exit(1);
+      }
+      if (err.code === 'commander.unknownOption') {
+        process.stderr.write(chalk.red('Error: unknown option\n'));
+        process.exit(1);
+      }
+      if (err.code === 'commander.excessArguments') {
+        process.stderr.write(chalk.red('Error: unknown command\n'));
+        process.exit(1);
+      }
+      if (err.code === 'commander.help') {
+        // Help is a normal operation, exit with 0
+        process.exit(0);
+      }
+      if (err.code === 'commander.helpDisplayed') {
+        // Help display is also normal
+        process.exit(0);
+      }
+      if (err.code === 'commander.version') {
+        // Version display is also normal
+        process.exit(0);
+      }
+      if (err.code === 'commander.versionDisplayed') {
+        // Version display is also normal
+        process.exit(0);
+      }
+      // For other errors, use default behavior
+      process.exit(err.exitCode || 1);
+    });
 
   // Setup global error handling
   setupErrorHandling();

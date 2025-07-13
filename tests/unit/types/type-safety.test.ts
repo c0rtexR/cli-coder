@@ -169,7 +169,7 @@ describe('Type Safety', () => {
         if (isSuccess(result)) {
           return result.data;
         } else {
-          console.error('Error:', result.error);
+          // Just return null without logging to avoid test environment issues
           return null;
         }
       }
