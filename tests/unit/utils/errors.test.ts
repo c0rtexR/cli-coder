@@ -4,10 +4,9 @@ import chalk from 'chalk';
 // Mock chalk
 vi.mock('chalk', () => ({
   default: {
-    red: {
+    red: Object.assign(vi.fn((text) => text), {
       bold: vi.fn((text) => text)
-    },
-    red: vi.fn((text) => text),
+    }),
     gray: vi.fn((text) => text)
   }
 }));
@@ -41,7 +40,16 @@ describe('Error Handling', () => {
 
   afterEach(() => {
     Object.assign(console, originalConsole);
-    Object.assign(process, originalProcess);
+    // Restore specific process properties that we may have modified
+    if (originalProcess.exit !== process.exit) {
+      Object.defineProperty(process, 'exit', { value: originalProcess.exit, configurable: true });
+    }
+    if (originalProcess.on !== process.on) {
+      Object.defineProperty(process, 'on', { value: originalProcess.on, configurable: true });
+    }
+    if (originalProcess.env !== process.env) {
+      Object.defineProperty(process, 'env', { value: originalProcess.env, configurable: true });
+    }
   });
 
   describe('CLIErrorClass', () => {

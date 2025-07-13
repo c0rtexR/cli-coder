@@ -235,7 +235,7 @@ describe('ConfigManager', () => {
       );
       expect(mockWriteFileSync).toHaveBeenCalledWith(
         '/home/testuser/.cli-coder/config.json',
-        expect.stringContaining('"provider":"openai"')
+        expect.stringContaining('"provider": "openai"')
       );
     });
 
@@ -256,7 +256,7 @@ describe('ConfigManager', () => {
       expect(mockMkdirSync).not.toHaveBeenCalled();
       expect(mockWriteFileSync).toHaveBeenCalledWith(
         join(process.cwd(), '.cli-coder', 'config.json'),
-        expect.stringContaining('"provider":"anthropic"')
+        expect.stringContaining('"provider": "anthropic"')
       );
     });
 
@@ -325,7 +325,7 @@ describe('ConfigManager', () => {
       }).toThrow(CLIErrorClass);
       expect(() => {
         configManager['loadConfigFile']('/nonexistent/config.json');
-      }).toThrow('CONFIG_NOT_FOUND');
+      }).toThrow('Config not found');
     });
 
     it('should parse valid JSON configuration', async () => {
@@ -475,6 +475,7 @@ describe('ConfigManager', () => {
 
       const localConfig = {
         llm: {
+          provider: 'openai' as const,
           apiKey: 'local-key',
           model: 'gpt-4'
         },

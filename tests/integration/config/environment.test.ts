@@ -13,8 +13,10 @@ describe('Environment Variable Override Integration', () => {
   let originalEnv: NodeJS.ProcessEnv;
 
   beforeEach(() => {
-    // Create temporary test directory
-    testDir = join(tmpdir(), `cli-coder-env-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    // Create unique temporary test directory
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).slice(2);
+    testDir = join(tmpdir(), `cli-coder-env-test-${timestamp}-${random}`);
     mkdirSync(testDir, { recursive: true });
 
     // Store original values
@@ -22,32 +24,57 @@ describe('Environment Variable Override Integration', () => {
     originalCwd = process.cwd();
     originalEnv = { ...process.env };
 
-    // Set test environment
+    // Set test environment with complete isolation
     process.env.HOME = testDir;
     process.chdir(testDir);
 
-    // Clear all CLI-coder related environment variables
+    // Clear ALL environment variables that could affect tests
     delete process.env.OPENAI_API_KEY;
     delete process.env.ANTHROPIC_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.CLI_CODER_SHELL_TIMEOUT;
     delete process.env.CLI_CODER_ALLOW_DANGEROUS;
+    delete process.env.CLI_CODER_CONFIG_PATH;
+    delete process.env.XDG_CONFIG_HOME;
 
+    // Create a fresh ConfigManager instance with clean state
     configManager = new ConfigManager();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    try {
+      // Clean up test directory first
+      if (existsSync(testDir)) {
+        rmSync(testDir, { recursive: true, force: true });
+      }
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+
     // Restore original values
     if (originalHome !== undefined) {
       process.env.HOME = originalHome;
+    } else {
+      delete process.env.HOME;
     }
-    process.chdir(originalCwd);
-    process.env = originalEnv;
+    
+    // Restore working directory
+    try {
+      process.chdir(originalCwd);
+    } catch (error) {
+      // Ignore if original directory no longer exists
+    }
 
-    // Clean up test directory
-    if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
-    }
+    // Restore environment variables completely
+    Object.keys(process.env).forEach(key => {
+      if (!(key in originalEnv)) {
+        delete process.env[key];
+      }
+    });
+    Object.assign(process.env, originalEnv);
+
+    // Add small delay to ensure file system operations complete
+    await new Promise(resolve => setTimeout(resolve, 10));
   });
 
   describe('API Key Environment Overrides', () => {
@@ -127,10 +154,8 @@ describe('Environment Variable Override Integration', () => {
     it('should handle empty environment variables', async () => {
       process.env.OPENAI_API_KEY = '';
 
-      const config = await configManager.loadConfig();
-
-      // Empty string should still override (even though it might fail validation)
-      expect(config.llm.apiKey).toBe('');
+      // Empty string should fail validation since API key requires min length of 1
+      await expect(configManager.loadConfig()).rejects.toThrow('API key is required');
     });
   });
 
@@ -262,13 +287,32 @@ describe('Environment Variable Override Integration', () => {
     });
 
     it('should handle environment overrides with missing config file', async () => {
+      // Ensure no config files exist by removing any that might have been created by previous tests
+      const localConfigDir = join(testDir, '.cli-coder');
+      const localConfigPath = join(localConfigDir, 'config.json');
+      const globalConfigDir = join(testDir, '.cli-coder');  // HOME is set to testDir
+      const globalConfigPath = join(globalConfigDir, 'config.json');
+      
+      if (existsSync(localConfigPath)) {
+        rmSync(localConfigPath, { force: true });
+      }
+      if (existsSync(globalConfigPath)) {
+        rmSync(globalConfigPath, { force: true });
+      }
+      if (existsSync(localConfigDir)) {
+        rmSync(localConfigDir, { recursive: true, force: true });
+      }
+      
       // No config file exists, only environment variables
       process.env.OPENAI_API_KEY = 'sk-env-only-key';
       process.env.CLI_CODER_SHELL_TIMEOUT = '75000';
       process.env.CLI_CODER_ALLOW_DANGEROUS = 'true';
 
-      // This should still fail because we need a complete LLM config, but env vars should be applied
-      await expect(configManager.loadConfig()).rejects.toThrow();
+      // Create a fresh ConfigManager instance to avoid any state issues
+      const freshConfigManager = new ConfigManager();
+
+      // This should fail because we need a complete LLM config (provider and model are required)
+      await expect(freshConfigManager.loadConfig()).rejects.toThrow(/provider|Required/);
     });
 
     it('should preserve environment overrides across config reloads', async () => {
@@ -336,6 +380,7 @@ describe('Environment Variable Override Integration', () => {
       // Create local config in same directory (since we're in testDir)
       const localConfig = {
         llm: {
+          provider: 'openai', // Required field
           apiKey: 'local-key',
           model: 'gpt-4'
         },
@@ -344,7 +389,8 @@ describe('Environment Variable Override Integration', () => {
         }
       };
 
-      writeFileSync(globalConfigPath, JSON.stringify(localConfig, null, 2)); // Overwrite for simplicity
+      // Since globalConfigPath and localConfigPath are the same in tests, just use one config
+      writeFileSync(globalConfigPath, JSON.stringify(localConfig, null, 2));
 
       // Set environment variables
       process.env.OPENAI_API_KEY = 'env-override-key';

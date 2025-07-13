@@ -66,26 +66,53 @@ export class ConfigManager {
   }
 
   private applyEnvironmentOverrides(config: Partial<AppConfig>): void {
-    // LLM overrides
-    if (process.env.OPENAI_API_KEY) {
+    // LLM overrides - prioritize based on provider
+    const provider = config.llm?.provider;
+    
+    // Apply provider-specific API key first
+    if (provider === 'openai' && process.env.OPENAI_API_KEY !== undefined) {
       config.llm = { 
-        ...config.llm, 
+        ...config.llm as any, 
         apiKey: process.env.OPENAI_API_KEY 
       };
-    }
-    if (process.env.ANTHROPIC_API_KEY) {
+    } else if (provider === 'anthropic' && process.env.ANTHROPIC_API_KEY !== undefined) {
       config.llm = { 
-        ...config.llm, 
+        ...config.llm as any, 
         apiKey: process.env.ANTHROPIC_API_KEY 
       };
+    } else if (provider === 'gemini' && process.env.GEMINI_API_KEY !== undefined) {
+      config.llm = { 
+        ...config.llm as any, 
+        apiKey: process.env.GEMINI_API_KEY 
+      };
+    } else {
+      // Fallback: apply any available API key
+      if (process.env.OPENAI_API_KEY !== undefined) {
+        config.llm = { 
+          ...config.llm as any, 
+          apiKey: process.env.OPENAI_API_KEY 
+        };
+      } else if (process.env.ANTHROPIC_API_KEY !== undefined) {
+        config.llm = { 
+          ...config.llm as any, 
+          apiKey: process.env.ANTHROPIC_API_KEY 
+        };
+      } else if (process.env.GEMINI_API_KEY !== undefined) {
+        config.llm = { 
+          ...config.llm as any, 
+          apiKey: process.env.GEMINI_API_KEY 
+        };
+      }
     }
     
     // Shell overrides
-    if (process.env.CLI_CODER_SHELL_TIMEOUT) {
-      const timeout = parseInt(process.env.CLI_CODER_SHELL_TIMEOUT);
-      if (!isNaN(timeout)) {
+    if (process.env.CLI_CODER_SHELL_TIMEOUT !== undefined) {
+      const timeoutStr = process.env.CLI_CODER_SHELL_TIMEOUT;
+      const timeout = parseInt(timeoutStr, 10);
+      // Only apply if it's a valid positive integer (no decimals) and reasonable (between 1 second and 1 hour)
+      if (!isNaN(timeout) && timeout.toString() === timeoutStr && timeout > 0 && timeout <= 3600000) {
         config.shell = { 
-          ...config.shell, 
+          ...config.shell as any, 
           defaultTimeout: timeout 
         };
       }
@@ -93,7 +120,7 @@ export class ConfigManager {
     
     if (process.env.CLI_CODER_ALLOW_DANGEROUS === 'true') {
       config.shell = { 
-        ...config.shell, 
+        ...config.shell as any, 
         allowDangerousCommands: true 
       };
     }

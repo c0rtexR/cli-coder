@@ -31,30 +31,67 @@ const mockProcess = {
 describe('Version Command', () => {
   let program: Command;
   let originalConsole: any;
-  let originalProcess: any;
+  let originalVersionDescriptor: PropertyDescriptor | undefined;
+  let originalPlatformDescriptor: PropertyDescriptor | undefined;
+  let originalArchDescriptor: PropertyDescriptor | undefined;
+  let originalExitDescriptor: PropertyDescriptor | undefined;
 
   beforeEach(() => {
     program = new Command();
     originalConsole = { ...console };
-    originalProcess = { ...process };
+    
+    // Store original property descriptors
+    originalVersionDescriptor = Object.getOwnPropertyDescriptor(process, 'version');
+    originalPlatformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform');
+    originalArchDescriptor = Object.getOwnPropertyDescriptor(process, 'arch');
+    originalExitDescriptor = Object.getOwnPropertyDescriptor(process, 'exit');
     
     // Mock console methods
     console.log = mockConsole.log;
     console.error = mockConsole.error;
     
     // Mock process properties
-    Object.defineProperty(process, 'version', { value: mockProcess.version, configurable: true });
-    Object.defineProperty(process, 'platform', { value: mockProcess.platform, configurable: true });
-    Object.defineProperty(process, 'arch', { value: mockProcess.arch, configurable: true });
-    Object.defineProperty(process, 'exit', { value: mockProcess.exit, configurable: true });
+    Object.defineProperty(process, 'version', { 
+      value: mockProcess.version, 
+      configurable: true, 
+      writable: true 
+    });
+    Object.defineProperty(process, 'platform', { 
+      value: mockProcess.platform, 
+      configurable: true, 
+      writable: true 
+    });
+    Object.defineProperty(process, 'arch', { 
+      value: mockProcess.arch, 
+      configurable: true, 
+      writable: true 
+    });
+    Object.defineProperty(process, 'exit', { 
+      value: mockProcess.exit, 
+      configurable: true, 
+      writable: true 
+    });
     
     vi.clearAllMocks();
   });
 
   afterEach(() => {
-    // Restore original console and process
+    // Restore original console
     Object.assign(console, originalConsole);
-    Object.assign(process, originalProcess);
+    
+    // Restore original process properties using their original descriptors
+    if (originalVersionDescriptor) {
+      Object.defineProperty(process, 'version', originalVersionDescriptor);
+    }
+    if (originalPlatformDescriptor) {
+      Object.defineProperty(process, 'platform', originalPlatformDescriptor);
+    }
+    if (originalArchDescriptor) {
+      Object.defineProperty(process, 'arch', originalArchDescriptor);
+    }
+    if (originalExitDescriptor) {
+      Object.defineProperty(process, 'exit', originalExitDescriptor);
+    }
   });
 
   describe('Command Registration', () => {

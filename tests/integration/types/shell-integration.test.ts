@@ -81,7 +81,8 @@ describe('Shell Integration Tests', () => {
         };
 
         expect(result.success).toBe(true);
-        expect(result.stdout).toBe('/tmp');
+        // On macOS, /tmp is a symlink to /private/tmp
+        expect(['/tmp', '/private/tmp'].includes(result.stdout)).toBe(true);
       } catch (error: any) {
         // Skip test if /tmp doesn't exist or pwd fails
         console.warn('Skipping pwd test:', error.message);
@@ -127,7 +128,7 @@ describe('Shell Integration Tests', () => {
     it('should validate environment variable passing', () => {
       const command: ShellCommand = {
         command: 'node',
-        args: ['-e', 'console.log(process.env.TEST_VAR)']
+        args: ['-e', '"console.log(process.env.TEST_VAR)"']
       };
 
       const options: ShellOptions = {
