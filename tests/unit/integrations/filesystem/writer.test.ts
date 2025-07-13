@@ -39,6 +39,10 @@ describe('FileWriter', () => {
     mockDirname.mockImplementation((path) => path.split('/').slice(0, -1).join('/'));
     mockJoin.mockImplementation((...parts) => parts.join('/'));
     mockBasename.mockImplementation((path) => path.split('/').pop() || '');
+    
+    // Reset to default behavior (prevent test interference)
+    mockInquirer.prompt.mockResolvedValue({ proceed: true });
+    mockWriteFileSync.mockImplementation(() => {}); // Reset to no-op instead of throwing
   });
 
   afterEach(() => {

@@ -17,6 +17,9 @@ export * from './config.types';
 // Session Types
 export * from './session.types';
 
+// TUI Types
+export * from './tui.types';
+
 // Utility Types
 export type Result<T, E = Error> = {
   success: true;

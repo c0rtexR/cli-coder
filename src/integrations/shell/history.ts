@@ -36,6 +36,7 @@ export class ShellHistoryManager {
       command,
       startTime: new Date(),
       status: 'running',
+      ...(options?.workingDirectory && { workingDirectory: options.workingDirectory }),
     };
 
     this.addExecution(execution);

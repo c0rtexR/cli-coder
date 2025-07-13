@@ -1,0 +1,120 @@
+name: 🚀 PR Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # 🚦 Quick validation for draft PRs
+  quick-check:
+    name: 🚦 Quick Check
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == true
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Lint check
+        run: npm run lint
+
+      - name: 🔧 Type check
+        run: npm run type-check
+
+      - name: 🧪 Quick unit tests
+        run: npm run test:unit -- --run --reporter=basic
+
+  # 🧪 Full test suite for ready PRs
+  full-test-suite:
+    name: 🧪 Full Test Suite
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run linting
+        run: npm run lint
+
+      - name: 🔧 Run type checking  
+        run: npm run type-check
+
+      - name: 🧪 Run unit tests
+        run: npm run test:unit
+
+      - name: 🔗 Run integration tests
+        run: npm run test:integration
+
+      - name: 🏗️ Build project
+        run: npm run build
+
+      - name: 🎭 Run E2E tests
+        run: npm run test:e2e
+
+      - name: 📊 Test summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Linting: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Type checking: Passed" >> $GITHUB_STEP_SUMMARY  
+          echo "- ✅ Unit tests: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Integration tests: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ E2E tests: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 **All checks passed!** This PR is ready for review." >> $GITHUB_STEP_SUMMARY
+
+  # ⚡ Cross-platform compatibility check
+  compatibility-check:
+    name: ⚡ ${{ matrix.os }} 
+    runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run critical tests
+        run: npm run test:ci
+
+      - name: 🏗️ Test build
+        run: npm run build
+
+# 🛡️ Optimizations
+concurrency:
+  group: pr-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true

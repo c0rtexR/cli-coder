@@ -35,5 +35,9 @@ export function handleError(error: Error | CLIErrorClass): void {
       console.error(error.stack);
     }
   }
-  process.exit(1);
+  
+  // Don't exit in test environments
+  if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
+    process.exit(1);
+  }
 }

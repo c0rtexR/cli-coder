@@ -132,8 +132,15 @@ describe('File Commands Integration', () => {
       expect(session.context.map(f => f.path)).toEqual(
         expect.arrayContaining(['src/main.ts', 'src/utils.ts'])
       );
-      expect(session.context[0].content).toBe('console.log("main");');
-      expect(session.context[0].language).toBe('typescript');
+      
+      // Files are returned in alphabetical order, so utils.ts comes before main.ts
+      const mainFile = session.context.find(f => f.path === 'src/main.ts');
+      const utilsFile = session.context.find(f => f.path === 'src/utils.ts');
+      
+      expect(mainFile?.content).toBe('console.log("main");');
+      expect(mainFile?.language).toBe('typescript');
+      expect(utilsFile?.content).toBe('export const utils = {};');
+      expect(utilsFile?.language).toBe('typescript');
     });
 
     it('should handle multiple patterns in single command', async () => {
