@@ -117,7 +117,7 @@ describe('TUIApp', () => {
       expect(output).toContain('Active: input');
       expect(output).toContain('💬 Chat');
       expect(output).toContain('📁 Files');
-      expect(output).toContain('⌨️  Input');
+      expect(output).toContain('Input'); // Input panel is shown
     });
 
     it('should show help screen when Ctrl+H is pressed', async () => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
 import { ChatPanel } from './components/ChatPanel';
-import { FilePanel } from './components/FilePanel';
+import { EnhancedFilePanel } from './components/EnhancedFilePanel';
 import { InputPanel } from './components/InputPanel';
 import { StatusBar } from './components/StatusBar';
 import type { TUIAppProps } from '../../types/tui.types';
@@ -72,7 +72,7 @@ export const TUIApp: React.FC<TUIAppProps> = ({ session, config }) => {
         </Box>
 
         <Box flexGrow={1} borderStyle="single">
-          <FilePanel 
+          <EnhancedFilePanel 
             session={session}
             isActive={activePanel === 'files'}
             onActivate={() => setActivePanel('files')}
@@ -112,10 +112,16 @@ const HelpScreen: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       <Text>  ↑/↓           - Scroll through messages</Text>
       <Text>  Page Up/Down  - Fast scroll</Text>
       <Text> </Text>
-      <Text><Text bold>File Panel:</Text></Text>
+      <Text><Text bold>Enhanced File Browser:</Text></Text>
       <Text>  ↑/↓           - Navigate files</Text>
+      <Text>  ←/→           - Expand/collapse directories</Text>
       <Text>  Enter         - Add/remove from context</Text>
-      <Text>  Space         - Preview file</Text>
+      <Text>  Space         - Toggle file context/multi-select</Text>
+      <Text>  /             - Search files</Text>
+      <Text>  Ctrl+M        - Toggle multi-select mode</Text>
+      <Text>  Ctrl+A        - Select all (in multi-select)</Text>
+      <Text>  Ctrl+H        - Toggle hidden files</Text>
+      <Text>  F5            - Refresh file tree</Text>
       <Text> </Text>
       <Text><Text bold>Input Panel:</Text></Text>
       <Text>  Ctrl+Enter    - Send message</Text>
