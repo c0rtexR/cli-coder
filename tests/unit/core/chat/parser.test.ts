@@ -133,13 +133,12 @@ describe('CommandParser', () => {
   });
 
   describe('add command', () => {
-    it('should show usage when no arguments provided', async () => {
+    it('should show interactive file selection when no arguments provided', async () => {
       // Act
       await parser.parseCommand('/add');
 
       // Assert
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Usage: /add <file-pattern>'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Examples:'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Interactive file selection'));
     });
 
     it('should add files to context successfully', async () => {
