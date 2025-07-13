@@ -12,6 +12,11 @@ import { ChatSession } from '../../../../src/types';
 // Mock dependencies
 vi.mock('../../../../src/integrations/filesystem/service');
 vi.mock('../../../../src/utils/errors');
+vi.mock('inquirer', () => ({
+  default: {
+    prompt: vi.fn().mockResolvedValue({ action: 'cancel' }),
+  },
+}));
 vi.mock('chalk', () => ({
   default: {
     red: vi.fn((text) => text),

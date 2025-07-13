@@ -16,6 +16,7 @@ describe('Clipboard + File System Integration', () => {
   };
   let clipboardService: ClipboardService;
   const originalPlatform = process.platform;
+  const originalCwd = process.cwd();
 
   beforeEach(() => {
     // Create test directory and files
@@ -27,11 +28,17 @@ describe('Clipboard + File System Integration', () => {
       writeFileSync(fullPath, content);
     });
 
+    // Change to test directory so relative paths work
+    process.chdir(testDir);
+
     clipboardService = new ClipboardService();
     vi.clearAllMocks();
   });
 
   afterEach(() => {
+    // Restore original working directory
+    process.chdir(originalCwd);
+
     // Cleanup test directory
     try {
       rmSync(testDir, { recursive: true, force: true });
@@ -50,9 +57,9 @@ describe('Clipboard + File System Integration', () => {
     it('should expand and validate file paths from various formats', () => {
       const testCases = [
         { input: './test1.txt', expectedValid: true },
-        { input: join(testDir, 'test2.js'), expectedValid: true },
+        { input: './test2.js', expectedValid: true },
         { input: './nonexistent.txt', expectedValid: false },
-        { input: join(testDir, 'subdir'), expectedValid: false }, // Directory, not file
+        { input: './subdir', expectedValid: false }, // Directory, not file
       ];
 
       for (const testCase of testCases) {
@@ -247,16 +254,15 @@ describe('Clipboard + File System Integration', () => {
 
   describe('detailed clipboard results workflow', () => {
     it('should provide detailed metadata for clipboard file results', async () => {
-      // Create a mock clipboard service that simulates clipboard reading
-      const mockClipboardService = new ClipboardService();
-      const originalReadClipboard = mockClipboardService.readClipboard;
+      // Create a mock clipboard service with validation disabled
+      const mockClipboardService = new ClipboardService({ enableValidation: false });
       
       // Mock the readClipboard method to return our test content
       mockClipboardService.readClipboard = vi.fn().mockResolvedValue(
         [
-          join(testDir, 'test1.txt'),
-          join(testDir, 'test2.js'),
-          join(testDir, 'nonexistent.txt'),
+          './test1.txt',
+          './test2.js',
+          './nonexistent.txt',
         ].join('\n')
       );
 

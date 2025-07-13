@@ -409,6 +409,13 @@ describe('FilePathUtils', () => {
       expect(result).toEqual({
         valid: false,
         error: 'ELOOP: too many symbolic links encountered',
+        details: {
+          exists: false,
+          isDirectory: false,
+          isFile: false,
+          readable: false,
+          writable: false,
+        },
       });
     });
   });

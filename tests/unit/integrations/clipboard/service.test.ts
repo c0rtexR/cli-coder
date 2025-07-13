@@ -1,16 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'child_process';
 import { existsSync, statSync } from 'fs';
+import { homedir } from 'os';
 import { ClipboardService } from '../../../../src/integrations/clipboard/service';
 import type { ClipboardFileResult, ClipboardError } from '../../../../src/types';
 
 // Mock external dependencies
 vi.mock('child_process');
 vi.mock('fs');
+vi.mock('os', () => ({
+  homedir: vi.fn(),
+}));
 
 const mockExecSync = vi.mocked(execSync);
 const mockExistsSync = vi.mocked(existsSync);
 const mockStatSync = vi.mocked(statSync);
+const mockHomedir = vi.mocked(homedir);
 
 describe('ClipboardService', () => {
   let service: ClipboardService;
@@ -164,6 +169,7 @@ describe('ClipboardService', () => {
 
     it('should expand home directory paths', () => {
       const content = '~/documents/test.txt';
+      mockHomedir.mockReturnValue('/home/user');
       mockExistsSync.mockReturnValue(true);
       mockStatSync.mockReturnValue({ isFile: () => true, isDirectory: () => false } as any);
 
@@ -275,11 +281,13 @@ describe('ClipboardService', () => {
     });
 
     it('should expand home directory on Unix', () => {
+      mockHomedir.mockReturnValue('/home/user');
       const result = (service as any).normalizePath('~/documents/test.txt');
       expect(result).toBe('/home/user/documents/test.txt');
     });
 
     it('should expand home directory as bare ~', () => {
+      mockHomedir.mockReturnValue('/home/user');
       const result = (service as any).normalizePath('~');
       expect(result).toBe('/home/user');
     });
@@ -349,6 +357,7 @@ describe('ClipboardService', () => {
     it('should handle missing environment variables gracefully', () => {
       delete process.env.HOME;
       delete process.env.USERPROFILE;
+      mockHomedir.mockReturnValue('');
       
       const result = (service as any).normalizePath('~/test.txt');
       
