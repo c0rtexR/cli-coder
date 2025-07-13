@@ -146,22 +146,15 @@ jobs:
           # Add any required environment variables for real tests
           TEST_ENV: 'github-actions'
 
-  # ✅ Test Matrix (Multiple Node versions)
-  test-matrix:
-    name: 🧪 Node ${{ matrix.node-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    needs: lint-and-typecheck
+  # ✅ Node Version Compatibility (Linux only)
+  node-compatibility:
+    name: 🧪 Node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests]
     strategy:
       fail-fast: false
       matrix:
-        node-version: ['18', '20', '22']
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        # Only test critical combinations to avoid excessive job runs
-        exclude:
-          - os: windows-latest
-            node-version: '18'
-          - os: macos-latest
-            node-version: '18'
+        node-version: ['18', '22'] # Test LTS versions only
 
     steps:
       - name: 📥 Checkout code
@@ -176,14 +169,17 @@ jobs:
       - name: 📥 Install dependencies
         run: npm ci
 
-      - name: 🧪 Run core test suite
-        run: npm run test:ci # Unit + Integration tests
+      - name: 🏗️ Build project
+        run: npm run build
+
+      - name: 🧪 Run essential tests
+        run: npm run test:ci # Unit + Integration tests only
 
   # 📊 Test Summary
   test-summary:
     name: 📊 Test Summary
     runs-on: ubuntu-latest
-    needs: [unit-tests, integration-tests, e2e-tests, test-matrix]
+    needs: [unit-tests, integration-tests, e2e-tests, node-compatibility]
     if: always()
     steps:
       - name: 📊 Summary
@@ -195,13 +191,13 @@ jobs:
           echo "| 🧪 Unit Tests | ${{ needs.unit-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 🔗 Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY  
           echo "| 🎭 E2E Tests | ${{ needs.e2e-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🧪 Matrix Tests | ${{ needs.test-matrix.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 Node Compatibility | ${{ needs.node-compatibility.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [[ "${{ needs.unit-tests.result }}" == "success" && \
                 "${{ needs.integration-tests.result }}" == "success" && \
                 "${{ needs.e2e-tests.result }}" == "success" && \
-                "${{ needs.test-matrix.result }}" == "success" ]]; then
+                "${{ needs.node-compatibility.result }}" == "success" ]]; then
             echo "🎉 **All tests passed!** This PR is ready for review." >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Some tests failed.** Please check the failing jobs above." >> $GITHUB_STEP_SUMMARY

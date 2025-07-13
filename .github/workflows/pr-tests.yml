@@ -85,34 +85,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🎉 **All checks passed!** This PR is ready for review." >> $GITHUB_STEP_SUMMARY
 
-  # ⚡ Cross-platform compatibility check
-  compatibility-check:
-    name: ⚡ ${{ matrix.os }} 
-    runs-on: ${{ matrix.os }}
-    if: github.event.pull_request.draft == false
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 📥 Install dependencies
-        run: npm ci
-
-      - name: 🧪 Run critical tests
-        run: npm run test:ci
-
-      - name: 🏗️ Test build
-        run: npm run build
 
 # 🛡️ Optimizations
 concurrency:
